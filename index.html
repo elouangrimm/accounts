@@ -72,7 +72,7 @@
 
                 // Load existing notes from the account
                 const user = Clerk.user;
-                const savedNotes = user.publicMetadata.notes || '';
+                const savedNotes = user.unsafeMetadata.notes || '';
                 notesBox.value = savedNotes;
 
                 // Save notes to the account
@@ -81,9 +81,9 @@
 
                     try {
                         await Clerk.user.update({
-                            publicMetadata: { notes }
+                            unsafeMetadata: { notes }
                         });
-                        alert('Notes saved successfully!');
+                        console.log('Notes saved successfully!');
                     } catch (error) {
                         console.error('Error saving notes:', error);
                         alert('Failed to save notes.');
