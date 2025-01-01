@@ -54,50 +54,77 @@
     <script>
         window.addEventListener('load', async function () {
             await Clerk.load();
-
+    
             const appDiv = document.getElementById('app');
-
+    
             if (Clerk.user) {
                 appDiv.innerHTML = `
                     <div id="user-button"></div>
                     <textarea id="notes" placeholder="Write your notes here..."></textarea>
                     <button id="save-notes">Save Notes</button>
+                    <div id="info-panel" style="margin-top: 20px; padding: 15px; border: 1px solid #ccc; border-radius: 5px; background: #f9f9f9;">
+                        <h3>Account Information</h3>
+                        <p>Loading account information...</p>
+                    </div>
                 `;
-
+    
                 const userButtonDiv = document.getElementById('user-button');
                 const notesBox = document.getElementById('notes');
                 const saveButton = document.getElementById('save-notes');
-
+                const infoPanel = document.getElementById('info-panel');
+    
                 Clerk.mountUserButton(userButtonDiv);
-
-                // Load existing notes from the account
+    
                 const user = Clerk.user;
-                const savedNotes = user.unsafeMetadata.notes || '';
+                const savedNotes = user.unsafeMetadata?.notes || '';
                 notesBox.value = savedNotes;
-
-                // Save notes to the account
+    
                 saveButton.addEventListener('click', async function () {
                     const notes = notesBox.value;
-
+    
                     try {
                         await Clerk.user.update({
                             unsafeMetadata: { notes }
                         });
+    
                         console.log('Notes saved successfully!');
                     } catch (error) {
                         console.error('Error saving notes:', error);
-                        alert('Failed to save notes.');
+                        console.log('Failed to save notes. Please check your configuration.');
                     }
                 });
+    
+                const populateInfoPanel = () => {
+                    const connectedAccounts = user.externalAccounts.map(account => `
+                        <li>${account.provider}: ${account.username || account.email || 'N/A'}</li>
+                    `).join('');
+    
+                    const emails = user.emailAddresses.map(email => `
+                        <li>${email.emailAddress} (${email.verification?.status})</li>
+                    `).join('');
+    
+                    infoPanel.innerHTML = `
+                        <h3>Account Information</h3>
+                        <p><strong>Username:</strong> ${user.username || 'N/A'}</p>
+                        <p><strong>Email(s):</strong></p>
+                        <ul>${emails || '<li>N/A</li>'}</ul>
+                        <p><strong>Connected Accounts:</strong></p>
+                        <ul>${connectedAccounts || '<li>N/A</li>'}</ul>
+                        <p><strong>Two-Factor Authentication Enabled:</strong> ${user.twoFactorEnabled ? 'Yes' : 'No'}</p>
+                    `;
+                };
+    
+                populateInfoPanel();
             } else {
                 appDiv.innerHTML = `
                     <div id="sign-in"></div>
                 `;
-
+    
                 const signInDiv = document.getElementById('sign-in');
                 Clerk.mountSignIn(signInDiv);
             }
         });
     </script>
+    
 </body>
 </html>
